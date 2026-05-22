@@ -17,12 +17,20 @@ def send_email(subject, body, config: SmtpConfig, logger: Logging):
     message['To'] = config.recipients#['smtp']['recipients']  # Set current recipient
     # Send the email
     try:
-        # Create an SMTP object and specify the server and the port
-        with smtplib.SMTP(config.server, config.port) as server:
-            server.starttls()  # Start TLS encryption
-            server.login(config.login, config.password)  # Log in to the SMTP server
-            server.send_message(message)  # Send the email
-            logger.log(f"Email sent successfully to {config.recipients}!")
+        context = ssl.create_default_context()
+        if config.port == 465:
+            with smtplib.SMTP_SSL(config.server, config.port, context=context) as server:
+                server.login(config.login, config.password)
+                server.send_message(message)
+        else:
+            with smtplib.SMTP(config.server, config.port) as server:
+                server.ehlo()
+                server.starttls(context=context)
+                server.ehlo()
+                server.login(config.login, config.password)
+                server.send_message(message)
+
+        logger.log(f"Email sent successfully to {config.recipients}!")
     except Exception as e:
         logger.error(f"Error sending email to {config.recipients}: {e}")
 
