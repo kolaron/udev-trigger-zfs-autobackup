@@ -1,4 +1,5 @@
 import smtplib
+import ssl
 import yaml
 from email.message import EmailMessage
 from log_util import Logging
